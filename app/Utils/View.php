@@ -2,6 +2,20 @@
 namespace App\Utils;
 
 class View{
+
+    /**
+     * Variáveis da view
+     * @var array
+     */
+    private static $vars = [];
+
+    /**
+     * Define os dados da classe
+     * @param array
+     */
+    public static function init($vars = []){
+        self::$vars = $vars;
+    }
     /**
      * Retorna o conteúdo da view
      * @param string
@@ -22,8 +36,10 @@ class View{
         // Conteúdo
         $contentView = self::getContentView($view);
         
-        // Chaves dos arrays (índice)
+        // Une duas arrays
+        $vars  = array_merge(self::$vars, $vars);
 
+        // Chaves dos arrays (índice)
         $keys = array_keys($vars);
         $keys = array_map(function($item){
             return '{{'.$item.'}}';

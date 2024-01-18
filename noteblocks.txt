@@ -1,0 +1,39 @@
+View -> renderiza as páginas
+Page -> monta a página 
+Request, Response e Router -> configuram a rota
+pages -> define as rotas acessáveis
+Pages/X -> define as variáveis de ambiente
+
+preg_match -> cria um padrão para uma string e procura ele em outras (padrão, onde procurar, onde guardar)
+
+preg_replace -> cria um padrão para uma string e substitui ele por algum valor em outra (padrão, onde substituir, onde guardar)
+
+__DIR__ -> retorna o diretório atual do projeto
+
+array_merge -> une duas arrays e sobrescreve as chaves iguais pelo valor do último array na lista (a, b, c, d)
+
+array_keys -> retorna todos os valores de um array (array, qual indíce que retornar, qual indíce se encontra o valor buscado)
+
+array_map -> aplica uma função a cada elemento de um vetor escolhido (função, vetor)
+
+str_replace -> altera um valor em uma string ou em um array de strings (valor que vai ser procurado na string original, valor que será colocado no valor que vai ser procurado, string que sofrerá as modificações)
+
+$_SERVER['REQUEST_METHOD'] -> retorna o método HTTP usado para acessar a página 
+
+$_SERVER['REQUEST_URI'] -> retorna a URL após o domínio do site
+
+foreach -> chama os elementos de um array individualmente por um nome comum (array as valor) ou nomeia os indices e os valores guardados (array as indice => valor)
+
+strlen -> retorna quantidade de caracteres sem contar os espaços
+
+call_user_func_array -> chama uma função de retorno e passa parâmentros para ela (função/método/classe, valores que serão passados)
+
+__construct -> cria os parâmetros de criação de instância de uma classe.
+
+explode -> separa uma string por algum valor (valor que usará para separar, string que será separada)
+
+array_combine -> combina dois vetores usando os índices de um com os valores do outro (array, array)
+
+switch -> verifica a igualdade de dois valores e faz uma ação baseada no retorno true or false ($valor)
+
+parse_url -> retorna a url separada por componentes como protocolo, host e caminho (url)

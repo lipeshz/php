@@ -1,48 +1,179 @@
 <?php 
 namespace App\Http;
+use \Closure;
+use Exception;
+use ReflectionFunction;
 
 class Router{
-    /**
-     * URL do projeto
-     * @var string
-     */
-    private $url = '';
+   /**
+    * URL do projeto
+    * @var string
+    */
+   private $url = '';
 
-    /**
-     * Prefixo das rotas
-     * @var string
-     */
-    private $prefix = '';
+   /**
+    * Prefixo das rotas
+    * @var string
+    */
+   private $prefix = '';
 
-    /**
-     * índice das rotas
-     * @var array
-     */
-    private $routes = [];
+   /**
+    * índice das rotas
+    * @var array
+    */
+   private $routes = [];
 
-    /**
-     * @var Request
-     */
+   /**
+    * @var Request
+    */
 
-     private $request;
+   private $request;
 
-     /**
-      * Método que inicia a classe
-      */
-     public function __construct($url){
-        $this->request = new Request();
-        $this->url = $url;
-        $this->setPrefix();
-     }
+   /**
+   * Método que inicia a classe
+   */
+   public function __construct($url){
+      $this->request = new Request();
+      $this->url = $url;
+      $this->setPrefix();
+      
+   }
 
-     /**
-      * Define o prefixo das rotas
-      */
-     private function setPrefix(){
-        $parseUrl = parse_url($this->url);
+   /**
+    * Adiciona uma rota à classe
+    * @param string
+    * @param string
+    * @param array
+    */
+   private function addRoute($method,$route,$params=[]){
+      // Validação dos parâmetros
+      foreach($params as $key=>$value){
+         if($value instanceof Closure){
+            $params['controller'] = $value;
+            unset($params[$key]);
+            continue;
+         }
+      }
 
-        $this->prefix = $parseUrl['path'] ?? ''; /**Parei na configuração do router */
-     }
+      $params['variables'] = [];
+      $patternVariable = '/{(.*?)}/';
+      if(preg_match_all($patternVariable,$route,$matches)){
+         $route = preg_replace($patternVariable,'(.*?)',$route);
+         $params['variables'] = $matches[1];
+      }
 
+      $patternRoute = '/^'.str_replace('/','\/',$route).'$/';
+
+      $this->routes[$patternRoute][$method] = $params;
+   }
+   
+   /**
+   * Define o prefixo das rotas
+   */
+   private function setPrefix(){
+      $parseUrl = parse_url($this->url);
+
+      $this->prefix = $parseUrl['path'] ?? '';
+   }
+
+   /**
+    * Define a rota GET
+    * @param string
+    * @param array
+    */
+   public function get($route,$params=[]){
+      return $this->addRoute('GET',$route,$params);
+   }
+
+   /**
+    * Define a rota POST
+    * @param string
+    * @param array
+    */
+   public function post($route,$params=[]){
+      return $this->addRoute('POST',$route,$params);
+   }
+
+   /**
+    * Define a rota PUT
+    * @param string
+    * @param array
+    */
+    public function put($route,$params=[]){
+      return $this->addRoute('PUT',$route,$params);
+   }
+
+   /**
+    * Define a rota DELETE
+    * @param string
+    * @param array
+    */
+    public function delete($route,$params=[]){
+      return $this->addRoute('DELETE',$route,$params);
+   }
+
+   /**
+    * Retorna a URI sem o preifxo
+    * @return string
+    */
+   private function getUri(){
+      $uri = $this->request->getUri();
+      $xUri = strlen($this->prefix) ? explode ($this->prefix,$uri) : [$uri];
+      
+      return end($xUri);
+   }
+
+   /**
+    * Retorna os dados da rota
+    */
+   private function getRoute(){
+      $uri = $this->getUri();
+
+      // Método
+      $httpMethod = $this->request->getHttpMethod();
+       
+      // Valida as rotas
+      foreach($this->routes as $patternRoute=>$methods){
+         // Verifica se a URI bate com o padrão
+         if(preg_match($patternRoute,$uri,$matches)){
+            // Verifica o método
+            if(isset($methods[$httpMethod])){
+               unset($matches[0]);
+               $keys = $methods[$httpMethod]['variables'];
+               $methods[$httpMethod]['variables'] = array_combine($keys, $matches);
+               $methods[$httpMethod]['variables']['request'] = $this->request;
+
+               return $methods[$httpMethod];
+            }
+            throw new Exception("Método não permitido!", 405);
+         }
+      }
+      //URL não encontrada
+      throw new Exception("URL não encontrada", 404);
+   }
+
+   /**
+    * Executa a rota
+    * @return Response
+    */
+   public function run(){
+      try{
+         $route = $this->getRoute();
+
+         if(!isset($route['controller'])){
+            throw new Exception("URL não pôde ser processada.", 500);
+         }
+         // Argumentos da função
+         $args = [];
+         $reflection = new ReflectionFunction($route['controller']);
+         foreach($reflection->getParameters() as $parameters){
+            $name = $parameters->getName();
+            $args[$name] = $route['variables'][$name] ?? '';
+         }
+         return call_user_func_array($route['controller'],$args);
+      }catch(Exception $e){
+         return new Response($e->getCode(), $e->getMessage());
+      }
+   }
 }
 ?>
